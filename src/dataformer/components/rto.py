@@ -2,7 +2,7 @@ import time
 class rto:
     def __init__(self,llm) -> None:
         pass
-    def generate(self,return_model_answer=True):
+    def generate(self,request_list,return_model_answer=True):
         
         time.sleep(3)
         

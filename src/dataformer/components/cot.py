@@ -97,6 +97,6 @@ class cot:
          log.info(f"Final output :\n{output}")
 
      
-         responses_return.append(output)
+         responses_return.append(full_response)
       return responses_return
      

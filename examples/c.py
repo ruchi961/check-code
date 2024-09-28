@@ -16,64 +16,64 @@ COLOR = {
     "WHITE": "\033[97m",
     "ENDC": "\033[0m",
 }
-request_list = [
-    {"messages": [{"role": "user", "content": "If a train leaves a station traveling at 60 miles per hour and another train leaves the same station 30 minutes later traveling at 90 miles per hour, when will the second train catch up to the first train?"}]} 
-]
+# request_list = [
+#     {"messages": [{"role": "user", "content": "If a train leaves a station traveling at 60 miles per hour and another train leaves the same station 30 minutes later traveling at 90 miles per hour, when will the second train catch up to the first train?"}]} 
+# ]
 
 llm = AsyncLLM(
-    model="meta-llama/Meta-Llama-3.1-8B-Instruct", api_provider="deepinfra", api_key="T0RWsUfv2lROUOiPi6Vf943Y9RQ4zZ56"
+    model="meta-llama/Meta-Llama-3.1-8B-Instruct", api_provider="deepinfra", 
 )  
 
-cot = cot(
-    llm=llm
-)
-results = cot.generate()
+# cot = cot(
+#     llm=llm
+# )
+# results = cot.generate()
 
-print("\n\n")
-print(f"{COLOR['BLUE']}Prompt: {request_list[0]['messages'][0]['content']}")
-print("\n")
-for item in results:
+# print("\n\n")
+# print(f"{COLOR['BLUE']}Prompt: {request_list[0]['messages'][0]['content']}")
+# print("\n")
+# for item in results:
     
-        print(f"{COLOR['GREEN']}Cot ANswer: {item['cot_response']}{COLOR['ENDC']}")
-        print(f"{COLOR['PURPLE']}Model Answer: {item['model_response']}{COLOR['ENDC']}")
-        print("\n")
+#         print(f"{COLOR['GREEN']}Cot ANswer: {item['cot_response']}{COLOR['ENDC']}")
+#         print(f"{COLOR['PURPLE']}Model Answer: {item['model_response']}{COLOR['ENDC']}")
+#         print("\n")
 
 
-request_list = [
-    {"messages": [{"role": "user", "content": "I have a dish of potatoes. The following statements are true: No potatoes of mine, that are new, have >been boiled. All my potatoes in this dish are fit to eat. No unboiled potatoes of mine are fit to eat. Are there any new potatoes in this dish?"}]} 
-]
+# request_list = [
+#     {"messages": [{"role": "user", "content": "I have a dish of potatoes. The following statements are true: No potatoes of mine, that are new, have >been boiled. All my potatoes in this dish are fit to eat. No unboiled potatoes of mine are fit to eat. Are there any new potatoes in this dish?"}]} 
+# ]
 
 
-SelfConsistency = SelfConsistency(
-    llm=llm
-)
-results = SelfConsistency.generate()
+# SelfConsistency = SelfConsistency(
+#     llm=llm
+# )
+# results = SelfConsistency.generate()
 
-print("\n\n")
-print(f"{COLOR['BLUE']}Prompt: {request_list[0]['messages'][0]['content']}")
-print("\n")
-for item in results:
+# print("\n\n")
+# print(f"{COLOR['BLUE']}Prompt: {request_list[0]['messages'][0]['content']}")
+# print("\n")
+# for item in results:
     
-        print(f"{COLOR['GREEN']}Cot ANswer: {item['SelfConsistency_response']}{COLOR['ENDC']}")
-        print(f"{COLOR['PURPLE']}Model Answer: {item['model_response']}{COLOR['ENDC']}")
-        print("\n")
+#         print(f"{COLOR['GREEN']}Cot ANswer: {item['SelfConsistency_response']}{COLOR['ENDC']}")
+#         print(f"{COLOR['PURPLE']}Model Answer: {item['model_response']}{COLOR['ENDC']}")
+#         print("\n")
 
-request_list = [
-    {"messages": [{"role": "user", "content": "Write a code in python for timetable generation. Consider all the constraints."}]} 
-]
-pvg = pvg(
-    llm=llm
-)
-results = pvg.generate()
+# request_list = [
+#     {"messages": [{"role": "user", "content": "Write a code in python for timetable generation. Consider all the constraints."}]} 
+# ]
+# pvg = pvg(
+#     llm=llm
+# )
+# results = pvg.generate()
 
-print("\n\n")
-print(f"{COLOR['BLUE']}Prompt: {request_list[0]['messages'][0]['content']}")
-print("\n")
-for item in results:
+# print("\n\n")
+# print(f"{COLOR['BLUE']}Prompt: {request_list[0]['messages'][0]['content']}")
+# print("\n")
+# for item in results:
     
-        print(f"{COLOR['GREEN']}Cot ANswer: {item['pvg_response']}{COLOR['ENDC']}")
-        print(f"{COLOR['PURPLE']}Model Answer: {item['model_response']}{COLOR['ENDC']}")
-        print("\n")
+#         print(f"{COLOR['GREEN']}Cot ANswer: {item['pvg_response']}{COLOR['ENDC']}")
+#         print(f"{COLOR['PURPLE']}Model Answer: {item['model_response']}{COLOR['ENDC']}")
+#         print("\n")
 request_list = [
     {"messages": [{"role": "user", "content": "Write a genetic algorithm code in python which is fast."}]} 
 ]
@@ -81,13 +81,13 @@ request_list = [
 rto = rto(
     llm=llm
 )
-results = rto.generate()
+results = rto.generate(request_list)
 
 print("\n\n")
 print(f"{COLOR['BLUE']}Prompt: {request_list[0]['messages'][0]['content']}")
 print("\n")
 for item in results:
     
-        print(f"{COLOR['GREEN']}Cot ANswer: {item['rto_response']}{COLOR['ENDC']}")
+        print(f"{COLOR['GREEN']}RTO Answer: {item['rto_response']}{COLOR['ENDC']}")
         print(f"{COLOR['PURPLE']}Model Answer: {item['model_response']}{COLOR['ENDC']}")
         print("\n")

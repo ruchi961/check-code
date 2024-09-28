@@ -14,11 +14,12 @@ class rto:
         if return_model_answer:
             model_response_returned = self.llm.generate(request_list)
         
-        response=[]
+        
         rto_response_list = self.round_trip_optimization(request_list)
         model_response_list=[]
-        for response in model_response_returned:
-            model_response_list.append(response[1]['choices'][0]['message']['content'])
+        for response_out in model_response_returned:
+            model_response_list.append(response_out[1]['choices'][0]['message']['content'])
+        response=[]
         for model_response, rto_response in zip(model_response_list,rto_response_list):
             response.append({'model_response':model_response,"rto_response":rto_response})
         return response

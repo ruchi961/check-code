@@ -1,9 +1,127 @@
-import time 
+import logging
+from typing import List, Dict
+from difflib import SequenceMatcher
+
+# Initialize logger
+log = logging.getLogger(__name__)
 class SelfConsistency:
-    def __init__(self,llm) -> None:
-        pass
+    def __init__(self,llm,num_samples=5,similarity_threshold=0.8) -> None:
+        self.llm = llm
+        self.num_samples = num_samples
+        self.similarity_threshold = similarity_threshold
     def generate(self,request_list,return_model_answer=True):
+        if return_model_answer:
+            model_response_returned = self.llm.generate(request_list)
+        model_response=[]
+
         
-        li=[{"model_response":"Yes, there are new potatoes in the dish. Let's break down the reasoning:\n\n1. All the potatoes in the dish are fit to eat.\n2. If a potato is new, it hasn't been boiled, according to the first statement.\n3. If a potato hasn't been boiled, it is not fit to eat, according to the third statement.\n\nFrom (1) and (3), we can conclude that all the potatoes in the dish are not new. But, from (2), we know that there are new potatoes in the dish, which are the ones that haven't been boiled. \n\nTherefore, the answer is yes, there are new potatoes in the dish.","pvg_response":"Let's break down the statements:\n\n1. No potatoes of mine, that are new, have been boiled. (Only new potatoes have not been boiled.)\n2. All my potatoes in this dish are fit to eat.\n3. No unboiled potatoes of mine are fit to eat.\n\nFrom statement 3, we know that all unboiled potatoes are not fit to eat.\n\nNow, let's combine statements 1 and 3:\n\n* Since all new potatoes have not been boiled (statement 1), they are unboiled.\n* Since all unboiled potatoes are not fit to eat (statement 3), all new potatoes in the dish are not fit to eat.\n\nHowever, statement 2 says that all potatoes in the dish are fit to eat. This creates a contradiction with the conclusion we drew in the previous step.\n\nTherefore, the only way to resolve this contradiction is to conclude that there are no new potatoes in the dish. If there were new potatoes, then they would not be fit to eat (as per the contradiction we drew earlier), but statement 2 says that all potatoes in the dish are fit to eat.\n\nSo, the answer is: No, there are no new potatoes in this dish.","SelfConsistency_response":"Let's break down the statements:\n\n1. No potatoes of mine, that are new, have been boiled. (Only new potatoes have not been boiled.)\n2. All my potatoes in this dish are fit to eat.\n3. No unboiled potatoes of mine are fit to eat.\n\nFrom statement 3, we know that all unboiled potatoes are not fit to eat.\n\nNow, let's combine statements 1 and 3:\n\n* Since all new potatoes have not been boiled (statement 1), they are unboiled.\n* Since all unboiled potatoes are not fit to eat (statement 3), all new potatoes in the dish are not fit to eat.\n\nHowever, statement 2 says that all potatoes in the dish are fit to eat. This creates a contradiction with the conclusion we drew in the previous step.\n\nTherefore, the only way to resolve this contradiction is to conclude that there are no new potatoes in the dish. If there were new potatoes, then they would not be fit to eat (as per the contradiction we drew earlier), but statement 2 says that all potatoes in the dish are fit to eat.\n\nSo, the answer is: No, there are no new potatoes in this dish."}]
-        time.sleep(3)
-        return li
+        selfconsistency_returned_response_list = self.return_final_answer(request_list=request_list)
+        log.info(selfconsistency_returned_response_list)
+        selfconsistency_response_list=[]
+        for answer in selfconsistency_returned_response_list:
+            if answer['aggregated_result']['clusters']:
+                    selfconsistency_response_list.append(answer['aggregated_result']['clusters'][0]['answer'])
+            else:
+                    selfconsistency_response_list.append("No consistent answer found.")
+        model_response_list=[]
+        for out_response in model_response_returned:
+            model_response_list.append(out_response[1]['choices'][0]['message']['content'])
+        response=[]
+        for model_response, selfconsistency_response in zip(model_response_list,selfconsistency_response_list):
+            response.append({'model_response':model_response,"SelfConsistency_response":selfconsistency_response})
+        return response
+    
+
+    def gather_requests(self,request_list):
+        request_list_return =[]
+        for request in request_list:
+            initial_query=""
+            system_prompt = ""
+            conversation = []
+    
+            for message in request['messages']:
+                role = message['role']
+                content = message['content']
+                
+                if role == 'system':
+                    system_prompt = content
+                elif role in ['user', 'assistant']:
+                    conversation.append(f"{role.capitalize()}: {content}")
+            
+            initial_query = "\n".join(conversation)
+            request_list_return.append([system_prompt,initial_query])
+        return request_list_return
+    
+    def generate_responses(self, request_list):
+        
+        request_list_modified  =self.gather_requests(request_list)
+
+        responses_return = []
+        for i in range(len(request_list)):
+            system_prompt = request_list_modified[i][0]
+            user_prompt = request_list_modified[i][1]
+            messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ]
+            request_list[i]['messages'] = messages
+        
+            responses_li=[]
+            responses = self.llm.generate([request_list[i].copy() for _ in range(self.num_samples)])
+            for response_output in responses:    
+                responses_li.append(response_output[1]['choices'][0]['message']['content'])
+            responses_return.append(responses_li)
+        return responses_return
+
+    def calculate_similarity(self, a: str, b: str) -> float:
+        return SequenceMatcher(None, a, b).ratio()
+
+    def cluster_similar_responses(self, responses):
+        clusters = []
+        for response in responses:
+            added_to_cluster = False
+            for cluster in clusters:
+                if self.calculate_similarity(response, cluster[0]) >= self.similarity_threshold:
+                    cluster.append(response)
+                    added_to_cluster = True
+                    break
+            if not added_to_cluster:
+                clusters.append([response])
+        return clusters
+
+    def aggregate_results(self, responses) -> Dict[str, any]:
+        final_answers = responses
+        cluster_answer=[]
+        return_final_answer=[]
+        for answer in final_answers:
+            clusters = self.cluster_similar_responses(answer)
+        
+            cluster_info = []
+            for cluster in clusters:
+                cluster_info.append({
+                    "answer": cluster[0],
+                    "frequency": len(cluster),
+                    "variants": cluster
+                })
+            
+            cluster_info.sort(key=lambda x: x['frequency'], reverse=True)
+            
+            cluster_answer.append({
+                "clusters": cluster_info,
+                "total_responses": len(answer),
+                "num_unique_clusters": len(clusters)
+            })
+        return cluster_answer
+    
+    def return_final_answer(self,request_list):
+        answer_response_list = self.generate_responses(request_list)
+        result_clusters = self.aggregate_results(answer_response_list)
+        final_answer=[]
+        for i in range(len(answer_response_list)):
+            final_answer.append({
+            "individual_responses": answer_response_list[i],
+            "aggregated_result": result_clusters[i]
+        })
+        return final_answer
+                       
+

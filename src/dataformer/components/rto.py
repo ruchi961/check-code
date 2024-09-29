@@ -22,7 +22,7 @@ class rto:
         response=[]
         for model_response, rto_response in zip(model_response_list,rto_response_list):
             response.append({'model_response':model_response,"rto_response":rto_response})
-         return response
+        return response
 
 
     def extract_code(self,text_content: str):
